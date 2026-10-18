@@ -7,78 +7,89 @@ import type {MutableRefObject} from 'react';
 import type {TourStage} from '@/data/portfolio';
 
 type Point=[number,number];
-type Node={point:Point;pause?:number;cue?:TourStage};
 type Pose={point:Point;moving:boolean;stage:TourStage};
-const speed=2.25;
-const distance=(a:Point,b:Point)=>Math.hypot(b[0]-a[0],b[1]-a[1]);
-const entrance:Point[]=[[0,7.2],[0,4.75],[0,-.22],[-3.3,-.22],[-3.3,-1.0]];
-const route:Node[]=[
-{point:[-3.3,-1.0],pause:3.8,cue:'welcome'},
-{point:[-3.3,-.22]},
-{point:[0,-.22]},
-{point:[3.3,-.22]},
-{point:[3.3,-.99],pause:8.5,cue:'works'},
-{point:[3.3,-.22]},
-{point:[0,-.22]},
-{point:[0,4.65]},
-{point:[-3.3,4.65]},
-{point:[-3.3,3.58],pause:8.5,cue:'projects'},
-{point:[-3.3,4.65]},
-{point:[0,4.65]},
-{point:[3.3,4.65]},
-{point:[3.3,3.58],pause:8.5,cue:'skills'},
-{point:[3.3,4.65]},
-{point:[0,4.65]},
-{point:[0,-.22]},
-{point:[-3.3,-.22]},
-{point:[-3.3,-1.0],pause:3.6,cue:'return'}
+type Stop={point:Point;hold?:number;cue?:TourStage};
+const speed=1.75;
+const dist=(a:Point,b:Point)=>Math.hypot(b[0]-a[0],b[1]-a[1]);
+const entrance:Stop[]=[
+ {point:[0,8.5],hold:1},
+ {point:[0,6.85],hold:2.3},
+ {point:[0,5.5]},
+ {point:[0,4.65]},
+ {point:[0,-.25]},
+ {point:[-3.3,-.25]},
+ {point:[-3.3,-1.05],hold:4.8,cue:'welcome'}
 ];
-const entranceDuration=entrance.slice(1).reduce((s,p,i)=>s+distance(p,entrance[i])/speed,0);
-const routeDuration=route.reduce((s,n,i)=>s+(i?distance(route[i-1].point,n.point)/speed:0)+(n.pause??0),0);
-export const TOUR_DURATION=entranceDuration+routeDuration;
-
-function linePath(points:Point[],seconds:number):Pose{
- let left=seconds;
- for(let i=1;i<points.length;i++){
-   const from=points[i-1],to=points[i];
-   const dt=distance(from,to)/speed;
-   if(left<dt){const u=Math.max(0,Math.min(1,left/dt));return {point:[from[0]+(to[0]-from[0])*u,from[1]+(to[1]-from[1])*u],moving:true,stage:'arrival'};}
-   left-=dt;
- }
- return {point:points[points.length-1],moving:false,stage:'arrival'};
-}
-function routePath(seconds:number):Pose{
- let left=Math.max(0,seconds),stage:TourStage='welcome';
- for(let i=0;i<route.length;i++){
-   const node=route[i];
-   if(i){
-     const from=route[i-1].point,to=node.point,dt=distance(from,to)/speed;
-     if(left<dt){const u=Math.min(1,left/dt);return {point:[from[0]+(to[0]-from[0])*u,from[1]+(to[1]-from[1])*u],moving:true,stage};}
-     left-=dt;
+const route:Stop[]=[
+ {point:[-3.3,-1.05],hold:5.4,cue:'welcome'},
+ {point:[-3.3,-.25]},
+ {point:[0,-.25]},
+ {point:[3.3,-.25]},
+ {point:[3.3,-1.0],hold:9,cue:'works'},
+ {point:[3.3,-.25]},
+ {point:[0,-.25]},
+ {point:[0,4.65]},
+ {point:[-3.3,4.65]},
+ {point:[-3.3,3.55],hold:9,cue:'projects'},
+ {point:[-3.3,4.65]},
+ {point:[0,4.65]},
+ {point:[3.3,4.65]},
+ {point:[3.3,3.55],hold:9,cue:'skills'},
+ {point:[3.3,4.65]},
+ {point:[0,4.65]},
+ {point:[0,-.25]},
+ {point:[-3.3,-.25]},
+ {point:[-3.3,-1.05],hold:6,cue:'return'}
+];
+function pathDuration(nodes:Stop[]){return nodes.reduce((sum,n,i)=>sum+(n.hold??0)+(i?dist(nodes[i-1].point,n.point)/speed:0),0);}
+export const ENTRANCE_DURATION=pathDuration(entrance);
+export const TOUR_DURATION=ENTRANCE_DURATION+pathDuration(route);
+function pathPose(nodes:Stop[],time:number,initial:TourStage):Pose{
+ let remaining=Math.max(0,time),stage=initial;
+ for(let i=0;i<nodes.length;i++){
+   const n=nodes[i];
+   if(i>0){
+     const from=nodes[i-1].point,to=n.point;
+     const duration=dist(from,to)/speed;
+     if(remaining<duration){
+       const t=duration?Math.max(0,Math.min(1,remaining/duration)):1;
+       return {point:[from[0]+(to[0]-from[0])*t,from[1]+(to[1]-from[1])*t],moving:true,stage};
+     }
+     remaining-=duration;
    }
-   if(node.cue)stage=node.cue;
-   const pause=node.pause??0;
-   if(left<pause)return {point:node.point,moving:false,stage};
-   left-=pause;
+   if(n.cue)stage=n.cue;
+   if(remaining<(n.hold??0))return {point:n.point,moving:false,stage};
+   remaining-=n.hold??0;
  }
- return {point:route[route.length-1].point,moving:false,stage:'complete'};
+ return {point:nodes[nodes.length-1].point,moving:false,stage:time>pathDuration(nodes)?'complete':stage};
 }
-export function currentTourStage(seconds:number):TourStage{
- if(seconds<entranceDuration)return 'arrival';
- return routePath(seconds-entranceDuration).stage;
+export function currentTourStage(time:number):TourStage{
+ if(time<ENTRANCE_DURATION)return pathPose(entrance,time,'arrival').stage;
+ return pathPose(route,time-ENTRANCE_DURATION,'welcome').stage;
 }
-export function getTourFocus(seconds:number):Point{
- if(seconds<entranceDuration)return linePath(entrance,seconds).point;
- return routePath(seconds-entranceDuration).point;
+export function getTourFocus(time:number):Point{
+ if(time<ENTRANCE_DURATION)return pathPose(entrance,time,'arrival').point;
+ return pathPose(route,time-ENTRANCE_DURATION,'welcome').point;
 }
-function personAt(seconds:number,role:'visitor'|'guide'):Pose{
- if(role==='guide') {
-   if(seconds<=entranceDuration)return {point:route[0].point,moving:false,stage:'arrival'};
-   return routePath(seconds-entranceDuration);
+export function getDoorOpen(time:number){
+ const approach=1.8,closeAt=8.5;
+ const up=Math.min(1,Math.max(0,(time-approach)/1.25));
+ const down=Math.min(1,Math.max(0,(time-closeAt)/1.35));
+ return up*(1-down);
+}
+function guideStart(time:number){
+ return Math.max(0,time-ENTRANCE_DURATION-3);
+}
+function personAt(time:number,role:'visitor'|'guide'):Pose{
+ if(role==='guide'){
+   if(time<ENTRANCE_DURATION+3)return {point:[-3.7,-1.18],moving:false,stage:time<ENTRANCE_DURATION?'arrival':'welcome'};
+   // Guide departs desk first, visitor follows a fraction later.
+   return pathPose(route,guideStart(time),'welcome');
  }
- if(seconds<entranceDuration)return linePath(entrance,seconds);
- const pose=routePath(Math.max(0,seconds-entranceDuration-.8));
- return {...pose,point:[pose.point[0]+.38,pose.point[1]+.4]};
+ if(time<ENTRANCE_DURATION)return pathPose(entrance,time,'arrival');
+ const elapsed=Math.max(0,time-ENTRANCE_DURATION-4.2);
+ const pose=pathPose(route,elapsed,'welcome');
+ return {...pose,point:[pose.point[0]+.4,pose.point[1]+.32]};
 }
 
 export function Clock({
@@ -105,9 +116,10 @@ export function Clock({
 export type ActorState='idle'|'walk'|'wave'|'point'|'talk'|'listen'|'lookAround'|'beckon'|'farewell';
 function actorState(seconds:number,role:'guide'|'visitor',pose:Pose):ActorState{
  if(pose.moving)return 'walk';
- if(pose.stage==='arrival')return role==='guide'&&seconds>entranceDuration-2?'wave':'idle';
- if(pose.stage==='complete'||pose.stage==='return')return role==='guide'?'farewell':'wave';
- const elapsed=Math.max(0,seconds-entranceDuration);
+ if(role==='guide'&&seconds<ENTRANCE_DURATION+3)return seconds<ENTRANCE_DURATION?'idle':seconds<ENTRANCE_DURATION+1.1?'wave':'beckon';
+ if(pose.stage==='arrival')return 'walk';
+ if(seconds>TOUR_DURATION-5||pose.stage==='complete'||pose.stage==='return')return role==='guide'?'farewell':'wave';
+ const elapsed=Math.max(0,seconds-ENTRANCE_DURATION);
  // Distinct gestures at every stop. Actions are synchronized from the shared tour clock.
  if(pose.stage==='welcome')return role==='guide'?(elapsed<2.2?'wave':elapsed<3.2?'beckon':'talk'):'listen';
  if(pose.stage==='works')return role==='guide'?(seconds%8<4?'point':'talk'):'lookAround';
@@ -134,7 +146,10 @@ function Character({role,time}:{
  useFrame((_,delta)=>{
    const t=time.current,pose=personAt(t,role),forward=personAt(Math.min(t+.07,TOUR_DURATION),role);
    if(!root.current)return;
-   root.current.position.set(pose.point[0],.08,pose.point[1]);
+   const seated=role==='guide' && t<ENTRANCE_DURATION+1.6;
+   const standProgress=role==='guide'?Math.max(0,Math.min(1,(t-ENTRANCE_DURATION-1.6)/1.6)):1;
+   root.current.position.set(pose.point[0],.08-(seated ? .48 : (1-standProgress)*.48),pose.point[1]);
+   root.current.rotation.z=role==='guide'?(.18*(1-standProgress)):0;
    const dx=forward.point[0]-pose.point[0], dz=forward.point[1]-pose.point[1];
    if(Math.hypot(dx,dz)>.006){
      const heading=Math.atan2(dx,dz);
@@ -145,16 +160,16 @@ function Character({role,time}:{
    const action=actorState(t,role,pose);
    const w=Math.sin(t*9.8), wave=Math.sin(t*11), breath=Math.sin(t*1.65);
    const walking=action==='walk';
-   const swing=walking?w*.56:0;
+   const swing=walking?w*.62:0;
    const gestures=action==='wave'||action==='farewell';
    const pointing=action==='point';
    const beckoning=action==='beckon';
    const talking=action==='talk';
    const listening=action==='listen';
    const looking=action==='lookAround';
-   const leftLegX=swing, rightLegX=-swing;
-   const leftArmX=walking?-swing*.7:talking?Math.sin(t*3.6)*.24:0;
-   const rightArmX=walking?swing*.7:gestures?.65+wave*.25:pointing?.25:beckoning?.4+Math.sin(t*4)*.28:talking?Math.sin(t*4)*.37:0;
+   const leftLegX=seated?-1.12:swing, rightLegX=seated?-1.12:-swing;
+   const leftArmX=seated?-.36:walking?-swing*.7:talking?Math.sin(t*3.6)*.24:0;
+   const rightArmX=seated?-.42:walking?swing*.7:gestures?.65+wave*.25:pointing?.25:beckoning?.4+Math.sin(t*4)*.28:talking?Math.sin(t*4)*.37:0;
    const leftArmZ=talking?-.18:0;
    const rightArmZ=gestures?-1.7:pointing?-1.32:beckoning?-1.22:talking?-.45:0;
    const headY=looking?Math.sin(t*1.25)*.49:pointing?.33:listening?-.2:0;
