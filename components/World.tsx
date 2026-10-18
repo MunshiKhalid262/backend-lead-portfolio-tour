@@ -3,7 +3,8 @@ import {Canvas,useFrame,ThreeEvent} from '@react-three/fiber';
 import {Html,RoundedBox,ContactShadows} from '@react-three/drei';
 import {useMemo,useRef} from 'react';
 import type {MutableRefObject} from 'react';
-import {Clock,GuidedCharacters,getTourFocus,getDoorOpen} from './GuidedCharacters';
+import {Clock,GuidedCharacters} from './GuidedCharacters';
+import {getTourFocus,getDoorOpen} from './tourTimeline';
 import type {TourStage} from '@/data/portfolio';
 import * as THREE from 'three';
 import {rooms,RoomId} from '@/data/portfolio';
@@ -16,10 +17,13 @@ function Camera({time}:{time:MutableRefObject<number>}){
    const t=time.current,point=getTourFocus(t);
    // Elevated orbit: establish whole-floor geography, then gently rotate
    // around guided activity without obstructing the rooms.
-   const orbit=t*.085;
-   const radius=t<10?17:15.2;
-   const top=t<10?16:18;
-   const centerBlend=t<10?.25:.58;
+   const orbit=Math.sin(t*.045)*.28;
+   const perspective=camera as THREE.PerspectiveCamera;
+   const fov=perspective.aspect<1?52:40;
+   if(perspective.fov!==fov){perspective.fov=fov;perspective.updateProjectionMatrix();}
+   const radius=perspective.aspect<1?28:17;
+   const top=22;
+   const centerBlend=.22;
    const fx=point[0]*centerBlend,fz=point[1]*centerBlend;
    target.set(fx+Math.cos(orbit+.85)*radius,top,fz+Math.sin(orbit+.85)*radius);
    aim.set(fx,.45,fz);
@@ -41,7 +45,7 @@ function GlassEntrance({time}:{time:MutableRefObject<number>}){
    {boxes([0,2.61,0],[2.58,.12,.2],'#697d79')}
    <group ref={door} position={[-1.15,0,0]}>
      <group position={[1.15,0,0]}>
-       {boxes([0,1.32,0],[2.26,2.48,.055],'#a6d2d2')}
+       <mesh position={[0,1.32,0]}><boxGeometry args={[2.26,2.48,.055]}/><meshStandardMaterial color='#a6d2d2' transparent opacity={.22} roughness={.14} metalness={.15} depthWrite={false}/></mesh>
        {boxes([0,2.5,0],[2.36,.09,.11],'#607a7b')}
        {boxes([0,.12,0],[2.36,.09,.11],'#607a7b')}
        {boxes([-1.12,1.3,0],[.09,2.49,.1],'#607a7b')}
@@ -53,17 +57,17 @@ function GlassEntrance({time}:{time:MutableRefObject<number>}){
 }
 function ReceptionProps(){
  return <group position={[-3.3,0,-2.4]}>
-   {boxes([-.3,.93,-.24],[2.05,.15,1.13],'#ba926e')}
-   {boxes([-.3,.47,-.6],[1.9,.87,.25],'#8f6c56')}
-   {boxes([-.3,1.19,-.48],[.78,.58,.08],'#4c5964')}
-   {boxes([-.3,1.02,-.21],[.78,.07,.45],'#707b81')}
-   {boxes([-.3,1.04,-.2],[.65,.035,.3],'#a1b8b7')}
-   {boxes([-.8,.38,-1.05],[.54,.75,.58],'#5c756b')}
-   {boxes([-.8,.78,-1.32],[.5,.8,.16],'#617b71')}
+   {boxes([-.3,.73,-.24],[2.05,.15,1.13],'#ba926e')}
+   {boxes([-.3,.37,-.6],[1.9,.67,.25],'#8f6c56')}
+   {boxes([-.3,.99,-.48],[.78,.58,.08],'#4c5964')}
+   {boxes([-.3,.82,-.21],[.78,.07,.45],'#707b81')}
+   {boxes([-.3,.84,-.2],[.65,.035,.3],'#a1b8b7')}
+   {boxes([-.3,.44,-1.05],[.54,.12,.58],'#5c756b')}
+   {boxes([-.3,.78,-1.32],[.5,.8,.16],'#617b71')}
    {boxes([.72,.25,.55],[.75,.5,.65],'#a77e5d')}
  </group>;
 }
-function Furnish({id}:{id:RoomId}){return <>{id==='welcome'? <>{boxes([-.3,.65,-.3],[2,.15,1],'#d2a27c')}{boxes([-.3,.3,-.5],[1.8,.6,.25],'#926a52')}{boxes([1.35,.6,1],[.8,1.2,.8],'#b8a48c')}</>:id==='works'? <>{[-1.2,1.1].map((x,i)=><group key={x}>{boxes([x,1.85,-1.94],[1.8,1.25,.12],'#5d726c')}{boxes([x,1.85,-1.85],[1.53,.94,.05],i?'#e2b993':'#a7d2bd')}</group>)}{boxes([0,.5,.85],[2.3,1,1],'#bc9173')}</>:id==='projects'?<>{[-1.25,1.2].map(x=><group key={x}>{boxes([x,.66,.2],[1.65,.2,1],'#af8b84')}{boxes([x,.35,.1],[1.4,.55,.25],'#836f79')}{boxes([x,1.15,-.05],[.85,.65,.08],'#576e76')}</group>)}</>:<>{boxes([1.1,1.2,-.9],[1.8,2.4,.8],'#64818b')}{[.52,1.17,1.82].map(i=>boxes([1.1,i,-.46],[1.55,.12,.15],'#d7b98c',String(i)))}{boxes([-1,.65,.2],[2,.2,1],'#c49e76')}{boxes([-1,1.18,0],[.85,.7,.08],'#3a5864')}</>}</>}
+function Furnish({id}:{id:RoomId}){return <>{id==='welcome'? <>{boxes([1.35,.6,1],[.8,1.2,.8],'#b8a48c')}</>:id==='works'? <>{[-1.2,1.1].map((x,i)=><group key={x}>{boxes([x,1.85,-1.94],[1.8,1.25,.12],'#5d726c')}{boxes([x,1.85,-1.85],[1.53,.94,.05],i?'#e2b993':'#a7d2bd')}</group>)}</>:id==='projects'?<>{[-1.25,1.2].map(x=><group key={x}>{boxes([x,.66,.2],[1.65,.2,1],'#af8b84')}{boxes([x,.35,.1],[1.4,.55,.25],'#836f79')}{boxes([x,1.15,-.05],[.85,.65,.08],'#576e76')}</group>)}</>:<>{boxes([1.1,1.2,-.9],[1.8,2.4,.8],'#64818b')}{[.52,1.17,1.82].map(i=>boxes([1.1,i,-.46],[1.55,.12,.15],'#d7b98c',String(i)))}{boxes([-1,.65,.2],[2,.2,1],'#c49e76')}{boxes([-1,1.18,0],[.85,.7,.08],'#3a5864')}</>}</>}
 
 function ArchitecturalDetail({id}:{id:RoomId}) {
 return <>
@@ -113,7 +117,7 @@ export default function World({
  onProgress:(value:number)=>void;
 }){
  const time=useRef(0);
- return <Canvas shadows dpr={[1,1.5]} camera={{position:[17,18,19],fov:40}}
+ return <Canvas key={replay} shadows dpr={[1,1.5]} camera={{position:[17,18,19],fov:40}}
    gl={{antialias:true}} fallback={<div className="world-fallback">3D is unavailable on this device. Switch to the text experience to explore.</div>}>
    <color attach="background" args={['#f6ede0']}/>
    <ambientLight intensity={1.15}/>
@@ -130,7 +134,7 @@ export default function World({
    <GlassEntrance time={time}/><ReceptionProps/>
    {rooms.map(r=><Room key={r.id} id={r.id} onSelect={onSelect} onOpen={onOpen} selected={r.id===selected}/>)}
    <GuidedCharacters time={time}/>
-   <ContactShadows position={[0,-.36,0]} opacity={.25} scale={30} blur={3}/>
+   <ContactShadows frames={1} position={[0,-.36,0]} opacity={.25} scale={30} blur={3}/>
    <Clock time={time} playing={playing} replay={replay} onStage={onStage} onProgress={onProgress}/>
    <Camera time={time}/>
  </Canvas>

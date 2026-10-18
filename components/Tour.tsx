@@ -1,5 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
+import SceneBoundary from './SceneBoundary';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {caseStudies,experience,guideNarration,profile,rooms,skillGroups,type RoomId,type TourStage} from '@/data/portfolio';
 
@@ -37,6 +38,8 @@ export default function Tour(){
  const [progress,setProgress]=useState(0);
  const [simple,setSimple]=useState(false);
  const [ready,setReady]=useState(false);
+ const [unavailable,setUnavailable]=useState(false);
+ const handleUnavailable=useCallback(()=>{setUnavailable(true);setSimple(true);setPlaying(false);},[]);
  const [detail,setDetail]=useState<RoomId|null>(null);
  const [reducedMotion,setReducedMotion]=useState(false);
  const priorPlaying=useRef(false);
@@ -52,6 +55,11 @@ export default function Tour(){
  const returnToTour=()=>{setDetail(null);setSimple(false);if(!reducedMotion&&stage!=='complete')setPlaying(true);};
 
  useEffect(()=>{
+   const probe=document.createElement('canvas');
+   let context:WebGL2RenderingContext|null=null;
+   try{context=probe.getContext('webgl2');}catch{}
+   if(!context){handleUnavailable();return;}
+   context.getExtension('WEBGL_lose_context')?.loseContext();
    setReady(true);
    const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
    setReducedMotion(reduce);
@@ -71,7 +79,7 @@ export default function Tour(){
      <div className="brand">MK<span>.</span> PORTFOLIO</div>
      <div className="top-actions">
        <span className="desktop-hint">A GUIDED ENGINEERING JOURNEY</span>
-       <button onClick={simple?returnToTour:setTextMode}>{simple?'Watch animated tour':'Read the portfolio'} ↗</button>
+       <button disabled={unavailable} onClick={simple?returnToTour:setTextMode}>{unavailable?'Reading mode':simple?'Watch animated tour':'Read the portfolio'} ↗</button>
      </div>
    </header>
    <div className="layout">
@@ -92,12 +100,13 @@ export default function Tour(){
          <p>Meet the receptionist, tour the project gallery and engineering rooms, then return to reception. All guided automatically.</p>
        </div>
        {simple?<div className="simple-content">
+         {unavailable&&<p role="status" className="render-notice">This browser cannot display the 3D office. You can read the complete portfolio below.</p>}
          <div className="text-intro"><h2>{profile.name}</h2><p>{profile.headline}</p></div>
          {rooms.map(r=><section className="text-room" key={r.id}>
            <div className="tiny">{r.subtitle.toUpperCase()}</div><h2>{r.title}</h2><p>{r.description}</p><RoomContents id={r.id}/>
          </section>)}
        </div>:<div className="stage">
-         {ready&&<World selected={selected} onSelect={openDetails} onOpen={openDetails} playing={playing} replay={replay} onStage={onStage} onProgress={onProgress}/>}
+         {ready&&<SceneBoundary onUnavailable={handleUnavailable}><World selected={selected} onSelect={openDetails} onOpen={openDetails} playing={playing} replay={replay} onStage={onStage} onProgress={onProgress}/></SceneBoundary>}
          <span className="stage-label">● AUTOMATIC GUIDED TOUR</span>
          <div className="narration" aria-live="polite" aria-atomic="true">
            <span>{current.eyebrow}</span><h2>{current.title}</h2><p>{current.description}</p>
@@ -109,7 +118,7 @@ export default function Tour(){
          <span>{simple?'COMPLETE PORTFOLIO':'AUTOMATIC WALKTHROUGH'} · {simple?'Accessible reading mode':progress+'% finished'}</span>
          <div className="tour-buttons">
            {!simple&&<button onClick={()=>setPlaying(p=>!p)} disabled={stage==='complete'}>{playing?'Ⅱ Pause':'▶ Resume'}</button>}
-           <button onClick={restart}>↻ Replay</button>
+           {!unavailable&&<button onClick={restart}>↻ Replay</button>}
            {!simple&&<button onClick={setTextMode}>Full details ↗</button>}
          </div>
        </div>
