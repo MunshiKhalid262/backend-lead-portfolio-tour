@@ -1,0 +1,9 @@
+export type RoomId = "welcome" | "works" | "projects" | "skills";
+export const profile = {name:"Munshi Md Khalid", role:"Backend Lead · Platform Engineering", location:"Kolkata, India", intro:"I build backend systems that scale beyond one product, one tenant, and one team."};
+export const rooms: {id:RoomId;title:string;subtitle:string;color:string;position:[number,number,number];description:string}[] = [
+{id:"welcome",title:"Welcome Lobby",subtitle:"About me",color:"#edbd78",position:[-3.3,0,-2.4],description:"Backend engineering, platform thinking, production ownership, and a passion for reliable systems."},
+{id:"works",title:"Work Gallery",subtitle:"Selected case studies",color:"#a4c5b1",position:[3.3,0,-2.4],description:"Multi-tenant SaaS platforms, inventory and invoicing solutions, authentication systems, and cloud deployments."},
+{id:"projects",title:"Project Studio",subtitle:"Engineering leadership",color:"#cbb8d7",position:[-3.3,0,2.4],description:"Planning, API contracts, code reviews, production investigations, releases and collaboration across engineering teams."},
+{id:"skills",title:"Engineering Lab",subtitle:"Architecture & tooling",color:"#a6c9d9",position:[3.3,0,2.4],description:"Laravel, Node.js, Next.js, REST APIs, MySQL, database-per-tenant isolation, AWS, CI/CD and observability."}
+];
+export const caseStudies=[{title:"Multi-Tenant SaaS Platform",description:"Tenant-aware APIs, separate tenant databases, provisioning jobs, module gating and tenant operations.",tags:["Laravel","MySQL","AWS","Multi-tenancy"]},{title:"JPopular Business Suite",description:"Inventory, stock ledgers, invoicing, RBAC and business workflows built around Laravel and Next.js.",tags:["Laravel","Next.js","MySQL"]},{title:"Deployment & Reliability",description:"AWS infrastructure, Nginx, GitHub Actions and production-focused operational tooling.",tags:["AWS EC2","CI/CD","Nginx"]}];
