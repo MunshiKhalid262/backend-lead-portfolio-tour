@@ -8,3 +8,67 @@
 .profile a{color:#54745f;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:700px){.stage-help{top:58px;left:13px;right:auto;max-width:90%;text-align:left;font-size:9px}.controls .explore-exhibit{flex:1}}
 @media(prefers-reduced-motion:reduce){.world-hotspot{transition:none}}
+
+
+/* V3 guided tour experience */
+.top-actions{display:flex;align-items:center;gap:18px}
+.desktop-hint{font-size:10px;letter-spacing:.16em;color:#938773;font-weight:800}
+.hero h1{max-width:780px}
+.tour-route{margin-top:24px;display:flex;flex-direction:column;gap:8px}
+.tour-route-step{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:12px;color:#948b79;transition:background .3s}
+.tour-route-step.now{background:#e9ddc7;color:#355243}
+.tour-route-step.visited{color:#698a76}
+.tour-route-number{width:30px;height:30px;display:grid;place-items:center;border:1px solid #d6ccba;border-radius:50%;font-size:11px;font-weight:700;flex-shrink:0}
+.tour-route-step.now .tour-route-number{background:#355a48;color:white;border-color:#355a48}
+.tour-route-step strong{display:block;font-size:11px;letter-spacing:.07em}
+.tour-route-step small{display:block;font-size:10px;margin-top:4px;color:#9c9283;line-height:1.5}
+.tour-side-note,.keyboard-hint{color:#938978;font-size:12px;line-height:1.7}
+.tour-side-note{margin-top:22px;padding-left:8px}
+.keyboard-hint{margin-top:18px}
+.stage{height:min(57vw,560px);min-height:390px}
+.stage-label{z-index:2}
+.narration{position:absolute;z-index:4;bottom:24px;left:17px;right:17px;pointer-events:none;padding:16px 20px;background:#fffaf2eb;border:1px solid #d9c7a8;backdrop-filter:blur(9px);border-radius:14px;box-shadow:0 7px 25px #352c1c1a;max-width:620px}
+.narration>span{display:block;font-size:9px;letter-spacing:.18em;color:#a16d39;font-weight:900}
+.narration h2{margin:7px 0;font-size:19px;line-height:1.2;letter-spacing:-.025em}
+.narration p{margin:0;color:#596f61;font-size:12px;line-height:1.6}
+.narration button{pointer-events:auto;margin-top:12px;border:0;border-radius:8px;background:#355b47;color:white;padding:8px 13px;font-weight:700}
+.tour-progress-track{position:absolute;bottom:0;left:0;right:0;height:5px;background:#dfceb1;overflow:hidden;z-index:5}
+.tour-progress-track>div{height:100%;background:#6a9975;transition:width .45s linear}
+.controls .tour-buttons{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.controls .tour-buttons button:last-child{color:white;background:#355b48;border-color:#355b48}
+.controls button:disabled{cursor:default;opacity:.45}
+.text-intro{border:1px solid #e6dccb;border-radius:16px;background:white;padding:24px;margin-bottom:18px}
+.text-intro h2{font-size:26px;margin:0 0 8px}
+.text-intro p{line-height:1.6;color:#667569}
+.simple-content{max-height:none}
+.text-room{border-top:1px solid #e3d6bf;padding:25px 5px}
+.text-room h2{font-size:26px;margin:9px 0}
+.text-room>p{color:#6b7b71;line-height:1.65}
+.text-room .case{margin:11px 0;padding:16px}
+.case-link{display:inline-block;font-size:12px;color:#386a50;margin-top:12px;text-decoration:underline;text-underline-offset:3px}
+.case strong{font-size:12px;color:#8e765c}
+.collection{display:grid;grid-template-columns:1fr;gap:10px}
+.detail .collection{margin-top:20px}
+.detail a,.text-room a{color:#357452;text-decoration:underline;text-underline-offset:3px}
+.external-profile a{color:#426c56}
+.world-loading,.world-fallback{padding:40px;text-align:center;color:#677968}
+@media(min-width:1550px){.layout{grid-template-columns:215px minmax(0,1fr) 225px}.stage{height:620px}}
+@media(max-width:1100px){.desktop-hint{display:none}}
+@media(max-width:730px){
+ .top-actions button{font-size:12px;padding:9px 12px}
+ .hero h1{font-size:34px}
+ .tour-route{display:grid;grid-template-columns:repeat(4,minmax(115px,1fr));overflow-x:auto;gap:5px;margin-top:8px}
+ .tour-route-step{padding:9px;border:1px solid #e8ddc9}
+ .tour-route-step small{display:none}
+ .tour-side-note{font-size:11px;margin:8px 0}
+ .stage{height:64vh;min-height:425px}
+ .narration{bottom:21px;padding:12px;left:10px;right:10px}
+ .narration h2{font-size:17px}
+ .narration p{font-size:11px}
+ .stage-label{left:9px;top:9px}
+ .controls{display:flex;flex-wrap:wrap;align-items:center}
+ .controls>span{width:100%}
+ .controls .tour-buttons{justify-content:flex-start}
+ .controls .tour-buttons button{padding:10px 12px}
+}
+@media(prefers-reduced-motion:reduce){.narration,.tour-progress-track>div,.tour-route-step{transition:none}}
