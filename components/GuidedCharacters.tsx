@@ -6,91 +6,8 @@ import * as THREE from 'three';
 import type {MutableRefObject} from 'react';
 import type {TourStage} from '@/data/portfolio';
 
-type Point=[number,number];
-type Pose={point:Point;moving:boolean;stage:TourStage};
-type Stop={point:Point;hold?:number;cue?:TourStage};
-const speed=1.75;
-const dist=(a:Point,b:Point)=>Math.hypot(b[0]-a[0],b[1]-a[1]);
-const entrance:Stop[]=[
- {point:[0,8.5],hold:1},
- {point:[0,6.85],hold:2.3},
- {point:[0,5.5]},
- {point:[0,4.65]},
- {point:[0,-.25]},
- {point:[-3.3,-.25]},
- {point:[-3.3,-1.05],hold:4.8,cue:'welcome'}
-];
-const route:Stop[]=[
- {point:[-3.3,-1.05],hold:5.4,cue:'welcome'},
- {point:[-3.3,-.25]},
- {point:[0,-.25]},
- {point:[3.3,-.25]},
- {point:[3.3,-1.0],hold:9,cue:'works'},
- {point:[3.3,-.25]},
- {point:[0,-.25]},
- {point:[0,4.65]},
- {point:[-3.3,4.65]},
- {point:[-3.3,3.55],hold:9,cue:'projects'},
- {point:[-3.3,4.65]},
- {point:[0,4.65]},
- {point:[3.3,4.65]},
- {point:[3.3,3.55],hold:9,cue:'skills'},
- {point:[3.3,4.65]},
- {point:[0,4.65]},
- {point:[0,-.25]},
- {point:[-3.3,-.25]},
- {point:[-3.3,-1.05],hold:6,cue:'return'}
-];
-function pathDuration(nodes:Stop[]){return nodes.reduce((sum,n,i)=>sum+(n.hold??0)+(i?dist(nodes[i-1].point,n.point)/speed:0),0);}
-export const ENTRANCE_DURATION=pathDuration(entrance);
-export const TOUR_DURATION=ENTRANCE_DURATION+pathDuration(route);
-function pathPose(nodes:Stop[],time:number,initial:TourStage):Pose{
- let remaining=Math.max(0,time),stage=initial;
- for(let i=0;i<nodes.length;i++){
-   const n=nodes[i];
-   if(i>0){
-     const from=nodes[i-1].point,to=n.point;
-     const duration=dist(from,to)/speed;
-     if(remaining<duration){
-       const t=duration?Math.max(0,Math.min(1,remaining/duration)):1;
-       return {point:[from[0]+(to[0]-from[0])*t,from[1]+(to[1]-from[1])*t],moving:true,stage};
-     }
-     remaining-=duration;
-   }
-   if(n.cue)stage=n.cue;
-   if(remaining<(n.hold??0))return {point:n.point,moving:false,stage};
-   remaining-=n.hold??0;
- }
- return {point:nodes[nodes.length-1].point,moving:false,stage:time>pathDuration(nodes)?'complete':stage};
-}
-export function currentTourStage(time:number):TourStage{
- if(time<ENTRANCE_DURATION)return pathPose(entrance,time,'arrival').stage;
- return pathPose(route,time-ENTRANCE_DURATION,'welcome').stage;
-}
-export function getTourFocus(time:number):Point{
- if(time<ENTRANCE_DURATION)return pathPose(entrance,time,'arrival').point;
- return pathPose(route,time-ENTRANCE_DURATION,'welcome').point;
-}
-export function getDoorOpen(time:number){
- const approach=1.8,closeAt=8.5;
- const up=Math.min(1,Math.max(0,(time-approach)/1.25));
- const down=Math.min(1,Math.max(0,(time-closeAt)/1.35));
- return up*(1-down);
-}
-function guideStart(time:number){
- return Math.max(0,time-ENTRANCE_DURATION-3);
-}
-function personAt(time:number,role:'visitor'|'guide'):Pose{
- if(role==='guide'){
-   if(time<ENTRANCE_DURATION+3)return {point:[-3.7,-1.18],moving:false,stage:time<ENTRANCE_DURATION?'arrival':'welcome'};
-   // Guide departs desk first, visitor follows a fraction later.
-   return pathPose(route,guideStart(time),'welcome');
- }
- if(time<ENTRANCE_DURATION)return pathPose(entrance,time,'arrival');
- const elapsed=Math.max(0,time-ENTRANCE_DURATION-4.2);
- const pose=pathPose(route,elapsed,'welcome');
- return {...pose,point:[pose.point[0]+.4,pose.point[1]+.32]};
-}
+import type {Pose} from './tourTimeline';
+import {ENTRANCE_DURATION,TOUR_DURATION,currentTourStage,personAt} from './tourTimeline';
 
 export function Clock({
  time,playing,replay,onStage,onProgress
@@ -107,6 +24,7 @@ export function Clock({
  useFrame((_,delta)=>{
    if(playing)time.current=Math.min(TOUR_DURATION,time.current+Math.min(delta,.08));
    const stage=currentTourStage(time.current);
+   if(time.current>=TOUR_DURATION)onProgress(100);
    if(stage!==previous.current){previous.current=stage;onStage(stage);}
    const whole=Math.floor(time.current);
    if(whole!==lastSecond.current){lastSecond.current=whole;onProgress(Math.min(100,Math.round(time.current/TOUR_DURATION*100)));}
@@ -117,7 +35,7 @@ export type ActorState='idle'|'walk'|'wave'|'point'|'talk'|'listen'|'lookAround'
 function actorState(seconds:number,role:'guide'|'visitor',pose:Pose):ActorState{
  if(pose.moving)return 'walk';
  if(role==='guide'&&seconds<ENTRANCE_DURATION+3)return seconds<ENTRANCE_DURATION?'idle':seconds<ENTRANCE_DURATION+1.1?'wave':'beckon';
- if(pose.stage==='arrival')return 'walk';
+ if(pose.stage==='arrival')return 'idle';
  if(seconds>TOUR_DURATION-5||pose.stage==='complete'||pose.stage==='return')return role==='guide'?'farewell':'wave';
  const elapsed=Math.max(0,seconds-ENTRANCE_DURATION);
  // Distinct gestures at every stop. Actions are synchronized from the shared tour clock.
@@ -141,6 +59,8 @@ function Character({role,time}:{
  const torso=useRef<THREE.Group>(null);
  const head=useRef<THREE.Group>(null);
  const rightHand=useRef<THREE.Group>(null);
+ const leftKnee=useRef<THREE.Group>(null);
+ const rightKnee=useRef<THREE.Group>(null);
  const skin=role==='guide'?'#c68c69':'#dca481';
  const outfit=role==='guide'?'#548977':'#cf8751';
  useFrame((_,delta)=>{
@@ -148,7 +68,7 @@ function Character({role,time}:{
    if(!root.current)return;
    const seated=role==='guide' && t<ENTRANCE_DURATION+1.6;
    const standProgress=role==='guide'?Math.max(0,Math.min(1,(t-ENTRANCE_DURATION-1.6)/1.6)):1;
-   root.current.position.set(pose.point[0],.08-(seated ? .48 : (1-standProgress)*.48),pose.point[1]);
+   root.current.position.set(pose.point[0],.08-(1-standProgress)*.12,pose.point[1]);
    root.current.rotation.z=role==='guide'?(.18*(1-standProgress)):0;
    const dx=forward.point[0]-pose.point[0], dz=forward.point[1]-pose.point[1];
    if(Math.hypot(dx,dz)>.006){
@@ -156,6 +76,12 @@ function Character({role,time}:{
      let diff=heading-root.current.rotation.y;
      diff=Math.atan2(Math.sin(diff),Math.cos(diff));
      root.current.rotation.y+=diff*Math.min(1,delta*8);
+   }
+   if(!pose.moving){
+     const other=personAt(t,role==='guide'?'visitor':'guide').point;
+     const heading=seated?0:Math.atan2(other[0]-pose.point[0],other[1]-pose.point[1]);
+     const diff=Math.atan2(Math.sin(heading-root.current.rotation.y),Math.cos(heading-root.current.rotation.y));
+     root.current.rotation.y+=diff*Math.min(1,delta*6);
    }
    const action=actorState(t,role,pose);
    const w=Math.sin(t*9.8), wave=Math.sin(t*11), breath=Math.sin(t*1.65);
@@ -167,9 +93,12 @@ function Character({role,time}:{
    const talking=action==='talk';
    const listening=action==='listen';
    const looking=action==='lookAround';
-   const leftLegX=seated?-1.12:swing, rightLegX=seated?-1.12:-swing;
-   const leftArmX=seated?-.36:walking?-swing*.7:talking?Math.sin(t*3.6)*.24:0;
-   const rightArmX=seated?-.42:walking?swing*.7:gestures?.65+wave*.25:pointing?.25:beckoning?.4+Math.sin(t*4)*.28:talking?Math.sin(t*4)*.37:0;
+   const sit=1-standProgress;
+   const leftLegX=-sit*1.4+swing*(1-sit), rightLegX=-sit*1.4-swing*(1-sit);
+   if(leftKnee.current)leftKnee.current.rotation.x=sit*1.4+(walking?Math.max(0,-w)*.8:0);
+   if(rightKnee.current)rightKnee.current.rotation.x=sit*1.4+(walking?Math.max(0,w)*.8:0);
+   const leftArmX=seated?-1.25:walking?-swing*.7:talking?Math.sin(t*3.6)*.24:0;
+   const rightArmX=seated?-1.25:walking?swing*.7:gestures?.65+wave*.25:pointing?.25:beckoning?.4+Math.sin(t*4)*.28:talking?Math.sin(t*4)*.37:0;
    const leftArmZ=talking?-.18:0;
    const rightArmZ=gestures?-1.7:pointing?-1.32:beckoning?-1.22:talking?-.45:0;
    const headY=looking?Math.sin(t*1.25)*.49:pointing?.33:listening?-.2:0;
@@ -223,8 +152,10 @@ function Character({role,time}:{
    ))}
    {[-1,1].map(side=>(
      <group key={side} ref={side===-1?leftLeg:rightLeg} position={[side*.15,.8,0]}>
-       <mesh position={[0,-.29,0]} castShadow><capsuleGeometry args={[.115,.48,5,10]}/><meshStandardMaterial color={role==='guide'?'#344b53':'#476584'}/></mesh>
-       <mesh position={[0,-.67,.09]} castShadow><boxGeometry args={[.24,.14,.38]}/><meshStandardMaterial color='#433b37'/></mesh>
+       <mesh position={[0,-.17,0]} castShadow><capsuleGeometry args={[.115,.2,5,10]}/><meshStandardMaterial color={role==='guide'?'#344b53':'#476584'}/></mesh>
+       <group ref={side===-1?leftKnee:rightKnee} position={[0,-.36,0]}>
+       <mesh position={[0,-.15,0]} castShadow><capsuleGeometry args={[.1,.18,5,10]}/><meshStandardMaterial color={role==='guide'?'#344b53':'#476584'}/></mesh>
+       <mesh position={[0,-.31,.09]} castShadow><boxGeometry args={[.24,.14,.38]}/><meshStandardMaterial color='#433b37'/></mesh></group>
      </group>
    ))}
  </group>;

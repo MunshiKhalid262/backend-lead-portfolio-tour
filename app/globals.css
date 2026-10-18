@@ -72,3 +72,10 @@
  .controls .tour-buttons button{padding:10px 12px}
 }
 @media(prefers-reduced-motion:reduce){.narration,.tour-progress-track>div,.tour-route-step{transition:none}}
+
+/* Keep narration outside the 3D camera viewport so it never hides the doorway. */
+.stage{display:flex;flex-direction:column;height:640px}
+.stage>div:first-child{flex:1;min-height:0}
+.stage .narration{position:relative;bottom:auto;left:auto;right:auto;max-width:none;margin:0;border-radius:0;border-width:1px 0 0;flex-shrink:0}
+.render-notice{padding:16px;border:1px solid #d9c7a8;border-radius:12px;background:#f1e7d6;line-height:1.6}
+@media(max-width:730px){.stage{height:620px;min-height:0}.tour-route{display:flex}.tour-route-step{min-width:135px}.brand{font-size:14px}.top{gap:8px}.top-actions button{max-width:160px}.stage .narration{padding:14px}}
