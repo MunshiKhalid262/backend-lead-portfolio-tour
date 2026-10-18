@@ -79,3 +79,36 @@
 .stage .narration{position:relative;bottom:auto;left:auto;right:auto;max-width:none;margin:0;border-radius:0;border-width:1px 0 0;flex-shrink:0}
 .render-notice{padding:16px;border:1px solid #d9c7a8;border-radius:12px;background:#f1e7d6;line-height:1.6}
 @media(max-width:730px){.stage{height:620px;min-height:0}.tour-route{display:flex}.tour-route-step{min-width:135px}.brand{font-size:14px}.top{gap:8px}.top-actions button{max-width:160px}.stage .narration{padding:14px}}
+
+/* Reference-inspired studio and a phone-sized cinematic stage. */
+.office-sign{color:#384a45;display:flex;align-items:center;gap:12px;background:#e8e1d0;padding:10px 14px;border-radius:3px;white-space:nowrap}
+.office-sign b{font-size:30px;letter-spacing:-.06em}
+.office-sign span{font:700 8px Arial,sans-serif;letter-spacing:.18em}
+.office-exhibit{border:1px solid #c2cbc1;background:#fffdf5ed;color:#304e41;padding:8px 12px;border-radius:8px;box-shadow:0 4px 12px #20302520;font:700 11px Arial,sans-serif;white-space:nowrap}
+.office-exhibit span{display:block;font-size:9px;font-weight:400;margin-top:4px;color:#6d7e74}
+.stage{height:clamp(480px,64vh,680px);background:#e7e9e6}
+.stage-label{font-size:9px;padding:8px 10px;pointer-events:none}
+.stage .narration{padding:13px 18px;background:#fffaf2}
+@media(max-width:730px){
+ .layout{padding-top:14px}
+ .side>.tiny,.tour-side-note{display:none}
+ .side{padding-bottom:10px}
+ .tour-route{margin-top:0;gap:5px;padding-bottom:3px;scrollbar-width:thin}
+ .tour-route-step{min-width:100px;padding:6px;gap:6px}
+ .tour-route-number{width:23px;height:23px;font-size:9px}
+ .tour-route-step strong{font-size:8px}
+ .hero h1{font-size:clamp(27px,7.6vw,36px);margin:10px 0}
+ .hero .eyebrow{font-size:9px;letter-spacing:.1em}
+ .hero p{font-size:13px;line-height:1.55;margin:9px 0 13px}
+ .stage{height:clamp(365px,62svh,540px);min-height:0;border-radius:16px}
+ .stage .narration{padding:11px 13px}
+ .narration h2{font-size:16px;margin:5px 0}
+ .narration p{font-size:11px;line-height:1.45}
+ .stage-label{left:8px;top:8px;font-size:8px;padding:7px 9px}
+ .controls{margin-top:10px;gap:8px}
+ .controls .tour-buttons{width:100%;flex-wrap:nowrap;gap:6px}
+ .controls .tour-buttons button{flex:1;font-size:11px;padding:9px 5px}
+ .keyboard-hint{font-size:11px;margin-top:10px}
+ .office-exhibit{font-size:10px;padding:6px 9px}
+}
+@media(max-height:500px) and (orientation:landscape){.stage{height:400px}.hero h1{font-size:27px}}

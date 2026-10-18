@@ -68,7 +68,7 @@ function Character({role,time}:{
    if(!root.current)return;
    const seated=role==='guide' && t<ENTRANCE_DURATION+1.6;
    const standProgress=role==='guide'?Math.max(0,Math.min(1,(t-ENTRANCE_DURATION-1.6)/1.6)):1;
-   root.current.position.set(pose.point[0],.08-(1-standProgress)*.12,pose.point[1]);
+   root.current.position.set(pose.point[0],.02-(1-standProgress)*.12,pose.point[1]);
    root.current.rotation.z=role==='guide'?(.18*(1-standProgress)):0;
    const dx=forward.point[0]-pose.point[0], dz=forward.point[1]-pose.point[1];
    if(Math.hypot(dx,dz)>.006){
