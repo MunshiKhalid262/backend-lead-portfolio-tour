@@ -1,6 +1,6 @@
 'use client';
 import {Canvas,useFrame,ThreeEvent} from '@react-three/fiber';
-import {Html,RoundedBox,ContactShadows} from '@react-three/drei';
+import {Html,RoundedBox} from '@react-three/drei';
 import {useMemo,useRef} from 'react';
 import type {MutableRefObject} from 'react';
 import {Clock,GuidedCharacters} from './GuidedCharacters';
@@ -134,7 +134,6 @@ export default function World({
    <GlassEntrance time={time}/><ReceptionProps/>
    {rooms.map(r=><Room key={r.id} id={r.id} onSelect={onSelect} onOpen={onOpen} selected={r.id===selected}/>)}
    <GuidedCharacters time={time}/>
-   <ContactShadows frames={1} position={[0,-.36,0]} opacity={.25} scale={30} blur={3}/>
    <Clock time={time} playing={playing} replay={replay} onStage={onStage} onProgress={onProgress}/>
    <Camera time={time}/>
  </Canvas>

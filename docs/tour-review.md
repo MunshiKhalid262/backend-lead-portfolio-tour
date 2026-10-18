@@ -17,7 +17,7 @@ The production site was opened twice in the requested cloud Chrome browser. Both
 | P1 | Instant follower offset and progress drift | Blend offset; unified tested timeline; explicit 100% completion |
 | P1 | Reception desk duplicated; central gallery sofa obstructs actors | Remove duplicates/obstruction and narrow visitor offset |
 | P1 | Narration covers lower scene/entrance | Place narration below canvas in stage layout |
-| P2 | Contact shadows recomputed every frame | Bake static contact shadows once; retain directional shadows for actors |
+| P2 | Contact shadows recomputed every frame | Remove the extra contact-shadow pass; retain dynamic directional shadows to avoid baked actor silhouettes |
 | P2 | Replay inherits damped scene state | Remount scene on replay |
 
 ## Remaining work toward a polished architectural cartoon
@@ -28,6 +28,9 @@ The production site was opened twice in the requested cloud Chrome browser. Both
 5. Author turn anticipation and conversational eye contact; point at specific exhibit positions instead of using generic gestures.
 6. Tune glass reflections, exposure and shadow softness on an actual WebGL renderer. Measure frame timing and draw calls before making performance claims.
 7. Consider a true 360-degree orbit only with camera-aware wall cutaways/occlusion handling and shot-specific framing.
+
+## Preview deployment
+The Vercel GitHub check succeeded for the branch. Opening the preview redirects to Vercel authentication. The connected Vercel account returned 403 for the owning team, including its temporary-access lookup. Preview application rendering and after screenshots remain blocked.
 
 ## Required visual acceptance pass (not yet completed)
 Desktop 1440×900 and phone 390×844, plus a real Android device:
